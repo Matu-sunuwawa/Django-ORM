@@ -140,7 +140,7 @@ Note That: The only difference between only and values is <mark>only also fetche
 
 ## How to do a subquery expression in Django?
 Let’s start with something simple:
-+ We have a `UserParent model` which has `OnetoOne` relation with `auth user` like:
+We have a `UserParent model` which has `OnetoOne` relation with `auth user` like:
 ```
 from django.contrib.auth.models import User
 from django.db import models
@@ -159,6 +159,26 @@ Let's continue with something more complex:
 + Bro we should jump it 😂
 
 ## How to filter a queryset with criteria based on comparing their field values
++ You can use the <mark>F object</mark>
+Create some users first:
+```
+User.objects.create_user(email="shabda@example.com", username="shabda",first_name="Shabda", last_name="Raaj")
+User.objects.create_user(email="guido@example.com", username="Guido", first_name="Guido", last_name="Guido")
+```
+Now you can find the users where `first_name==last_name`:
+```
+User.objects.filter(last_name=F("first_name"))
+```
+What if we wanted users whose first and last names have same letter 🤔?
++ You can set the first letter from a string using Substr("first_name", 1, 1)
+Example:
+```
+User.objects.create_user(email="guido@example.com", username="Tim", first_name="Tim", last_name="Teters")
+User.objects.annotate(first=Substr("first_name", 1, 1), last=Substr("last_name", 1, 1)).filter(first=F("last"))
+```
+Note That: `F` can also be used with` __gt`, `__lt` and other expressions.
+
+## How to filter FileField without any file?
 
 
 
