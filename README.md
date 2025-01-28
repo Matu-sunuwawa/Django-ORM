@@ -6,6 +6,8 @@
 
 <h2>1. Querying and Filtering</h2>
 
+<img src="https://github.com/Matu-sunuwawa/Django-ORM/blob/main/django-orm.png">
+
 ## How to find the query associated with a queryset?
 + Youn can get str of any queryset.query to get the sql.
 For example: You have a model called `Event`. For getting all records, you will write something like `Event.objects.all()`,
