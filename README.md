@@ -315,10 +315,102 @@ Category.objects.all().count()
 ```
 Note That: `bulk_create` takes a list of unsaved objects.
 
+## How to copy or clone an existing model object?
++ There is no built-in method for copying model instances, it is possible to create new instance with all fields values copied.
++ If an instance is saved with instance’s pk set to None, the instance is used to create a new record in the DB. That means every field other than the PK is copied.
+```
+Hero.objects.all().count()
+hero = Hero.objects.first()
+hero.pk = None
+hero.save()
+Hero.objects.all().count()
+```
+output:
+```
+4
+5
+```
 
+## How to ensure that only one object can be created?
+Bro <mark>LOCKING</mark>:
+Sometimes you want to ensure that only one record can be created for a model. This is commonly required as application configuration store, or as a `locking mechanism` to access shared resources.
+```
+class Origin(models.Model):
+  name = models.CharField(max_length=100)
 
+  def save(self, *args, **kwargs):
+    if self.__class__.objects.count():
+      self.pk = self.__class__.objects.first().pk
+    super().save(*args, **kwargs)
+```
 
+## How to update denormalized fields in other models on save?
+You have models like this:
+```
+class Category(models.Model):
+  name = models.CharField(max_length=100)
+  hero_count = models.PositiveIntegerField()
+  villain_count = models.PositiveIntegerField()
+  class Meta:
+    verbose_name_plural = "Categories"
 
+class Hero(models.Model):
+  name = models.CharField(max_length=100)
+  category = models.ForeignKey(Category, on_delete=models.CASCADE)
+
+class Villain(models.Model):
+  name = models.CharField(max_length=100)
+  category = models.ForeignKey(Category, on_delete=models.CASCADE)
+```
++ You need the `hero_count` and `villain_count`, to be updated when new objects are created. You can do something like this:
+```
+class Hero(models.Model):
+  # ...
+  def save(self, *args, **kwargs):
+    if not self.pk:
+      Category.objects.filter(pk=self.category_id).update(hero_count=F('hero_count')+1)
+    super().save(*args, **kwargs)
+
+class Villain(models.Model):
+  #...
+  def save(self, *args, **kwargs):
+    if not self.pk:
+      Category.objects.filter(pk=self.category_id).update(villain_count=F('villain_count')+1)
+    super().save(*args, **kwargs)
+```
+
+## How to perform truncate like operation using Django ORM?
++ Django doesn’t provide a builtin to truncate a table, but still similar result can be achived using `delete() method`.
+```
+Category.objects.all().count()
+Category.objects.all().delete()
+Category.objects.all().count()
+```
+output:
+```
+7
+(7, {'entity.Category': 7})
+0
+```
+or You can add a classmethod to Category if you want to enable truncate.
+```
+class Category(models.Model):
+  # ...
+  @classmethod
+  def truncate(cls):
+    with connection.cursor() as cursor:
+      cursor.execute('TRUNCATE TABLE "{0}" CASCADE'.format(cls._meta.db_table))
+```
+*Then you can call Category.truncate()
+
+## What signals are raised by Django during object creation or update?
+Django provides signals which allows hooking into a model objects creation and deletion lifecycle.
++ pre_init
++ post_init
++ pre_save
++ post_save
++ pre_delete
++ post_delete
 
 
 
