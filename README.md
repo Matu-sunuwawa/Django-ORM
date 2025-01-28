@@ -99,6 +99,67 @@ from django.db.models import Q
 queryset = User.objects.filter(~Q(id__lt=5))
 ```
 
+##  How to do union of two querysets from same or different models?
++ The UNION operator is used to combine the result-set of two or more querysets.
+Let’s continue with our `auth_user` model:
+```
+q1 = User.objects.filter(id__gte=5)
+q2 = User.objects.filter(id__lte=9)
+
+q1.union(q2)
+q2.union(q1)
+```
+Now try this:
+```
+q3 = EventVillain.objects.all()
+q1.union(q3)
+```
+output: `django.db.utils.OperationalError`
++ The union operation can be performed only with the querysets having same fields and the datatypes.
+
+Since Hero and Villain both have the name and gender, we can use values_list to limit the selected fields then do a union.
+```
+Hero.objects.all().values_list("name", "gender").union(
+Villain.objects.all().values_list("name", "gender"))
+```
+
+## How to select some fields only in a queryset?
+Django provides two ways to do this
++ values and values_list methods on queryset.
++ only_method
+
+CDN: Say, we want to get first_name and last_name of all the users whose name starts with R.
+```
+queryset = User.objects.filter(first_name__startswith='R').values('first_name', 'last_name')
+```
+or
+```
+queryset = User.objects.filter(first_name__startswith='R').only("first_name", "last_name")
+```
+Note That: The only difference between only and values is <mark>only also fetches the id</mark>.
+
+## How to do a subquery expression in Django?
+Let’s start with something simple:
++ We have a `UserParent model` which has `OnetoOne` relation with `auth user` like:
+```
+from django.contrib.auth.models import User
+from django.db import models
+
+class UserParent(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    parent = models.OneToOneField('self', null=True, blank=True, on_delete=models.CASCADE)
+```
+We will find all the UserParent which have a UserParent(this means: 'you want to find all `UserParent` entries where the <mark>parent field is not null.</mark>')
+```
+from django.db.models import Subquery
+users = User.objects.all()
+UserParent.objects.filter(user_id__in=Subquery(users.values('id')))
+```
+Let's continue with something more complex:
++ Bro we should jump it 😂
+
+## How to filter a queryset with criteria based on comparing their field values
+
 
 
 
