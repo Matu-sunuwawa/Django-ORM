@@ -4,7 +4,7 @@
 + Django ORM provides abstractions to work with databases, in a mostly database agnostic way.
 + It keeps “Simple things easy and hard things possible”.
 
-<h2>Querying and Filtering</h2>
+<h2>1. Querying and Filtering</h2>
 
 ## How to find the query associated with a queryset?
 + Youn can get str of any queryset.query to get the sql.
