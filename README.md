@@ -179,12 +179,124 @@ User.objects.annotate(first=Substr("first_name", 1, 1), last=Substr("last_name",
 Note That: `F` can also be used with` __gt`, `__lt` and other expressions.
 
 ## How to filter FileField without any file?
++ A FileField or ImageField stores the path of the file or image.
+```
+from django.db.models import Q
+no_files_objects = MyModel.objects.filter(Q(file='')|Q(file=None))
+```
 
+## How to perform join operations in django ORM?
++ A SQL Join statement is used to combine data or rows from two or more tables
+```
+a1 = Article.objects.select_related('reporter')
+```
+or
+```
+a2 = Article.objects.filter(reporter__username='John')
+```
 
+## How to find second largest record using Django ORM ?
++ Though the ORM gives the flexibility of finding first(), last() item from the queryset
+```
+user = User.objects.order_by('-last_login')[1] // Second Highest record w.r.t 'last_login'
 
+user = User.objects.order_by('-last_login')[2] // Third Highest record w.r.t 'last_login'
+```
 
+## Find rows which have duplicate field values
++ Say you want all users whose first_name matches another user
+```
+duplicates = User.objects.values('first_name').annotate(name_count=Count('first_name')).filter(name_count__gt=1)
+```
+```
+duplicates
+```
+output: `<QuerySet [{'first_name': 'John', 'name_count': 3}]>`
+If you need to fill all the records, you can do:
+```
+records = User.objects.filter(first_name__in=[item['first_name'] for item in duplicates])
+```
+```
+print([item.id for item in records])
+```
+output: `[2, 11, 13]`
 
+## How to find distinct field values from queryset?
++ You want to find users whose names <mark>have not been repeated</mark>. You can do this like this
+```
+distinct = User.objects.values('first_name').annotate(name_count=Count('first_name')).filter(name_count=1)
+records = User.objects.filter(first_name__in=[item['first_name'] for item in distinct])
+```
+Note That:
+This is different from `User.objects.distinct("first_name").all()`, which will pull up the first record when it encounters a distinct first_name
 
+## How to group records in Django ORM?
++ Grouping of records in Django ORM can be done using aggregation functions like Max, Min, Avg, Sum.
+```
+from django.db.models import Avg, Max, Min, Sum, Count
+
+User.objects.all().aggregate(Avg('id'))
+User.objects.all().aggregate(Max('id'))
+User.objects.all().aggregate(Min('id'))
+User.objects.all().aggregate(Sum('id'))
+```
+output:
+```
+{'id__avg': 7.571428571428571}
+{'id__max': 15}
+{'id__min': 1}
+{'id__sum': 106}
+```
+
+## How to efficiently select a random object from a model?
+Example:
+```
+class Category(models.Model):
+  name = models.CharField(max_length=100)
+
+  class Meta:
+    verbose_name_plural = "Categories"
+  def __str__(self):
+    return self.name
+```
+solution:
+```
+def get_random():
+  return Category.objects.order_by("?").first()
+```
+Better solution(instead of sorting the whole table, you can get the max id, generate a random number in range [1, max_id], and filter that)
++ You are assuming that there have been no deletions.
+```
+from django.db.models import Max
+from entities.models import Category
+
+import random
+
+def get_random2():
+    max_id = Category.objects.all().aggregate(max_id=Max("id"))['max_id']
+    pk = random.randint(1, max_id)
+    return Category.objects.get(pk=pk)
+```
+If your models has deletions:
+```
+def get_random3():
+    max_id = Category.objects.all().aggregate(max_id=Max("id"))['max_id']
+    while True:
+        pk = random.randint(1, max_id)
+        category = Category.objects.filter(pk=pk).first()
+        if category:
+            return category
+```
+compare time complexity:
+```
+timeit.timeit(get_random3, number=100)
+timeit.timeit(get_random, number=100)
+```
+output:
+```
+0.20055226399563253
+56.92513192095794
+```
 
 
 
