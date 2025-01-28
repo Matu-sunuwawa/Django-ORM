@@ -412,6 +412,18 @@ Django provides signals which allows hooking into a model objects creation and d
 + pre_delete
 + post_delete
 
+<h2>3. Ordering things</h2>
+
+## How to order a queryset in ascending or descending order?
++ Ordering of the queryset can be achieved by order_by method
+```
+User.objects.all().order_by('date_joined') # For ascending
+User.objects.all().order_by('-date_joined') # For descending;
+```
+You can pass multiple fields to order_by:
+```
+User.objects.all().order_by('date_joined', '-last_login')
+```
 
 
 
