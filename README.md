@@ -426,6 +426,82 @@ User.objects.all().order_by('date_joined', '-last_login')
 ```
 
 
+<h2>3. Database Modelling</h2>
+
+## How to model one to one relationships?
++ One-to-one relationships occur when there is exactly one record in the first table that corresponds to one record in the related table
+```
+from django.contrib.auth.models import User
+
+class UserParent(models.Model):
+  user = models.OneToOneField(User,on_delete=models.CASCADE,primary_key=True,) # continue deleting the dependent models as well.
+  father_name = models.CharField(max_length=100)
+  mother_name = models.CharField(max_length=100)
+```
+
+## How to model one to many relationships?
++ In relational databases, a one-to-many relationship occurs when a parent record in one table can potentially reference several child records in another table.
++ To define a many-to-one relationship, use `ForeignKey`.
+```
+class Article(models.Model):
+  headline = models.CharField(max_length=100)
+  pub_date = models.DateField()
+  reporter = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reporter')
+
+  def __str__(self):
+    return self.headline
+  class Meta:
+    ordering = ('headline',)
+```
+
+## How to model many to many relationships?
++ A `many-to-many` relationship refers to a relationship between tables in a database when a parent row in one table contains several child rows in the second table, and vice versa.
+```
+class User(AbstractUser):
+  tweet = models.ManyToManyField(Tweet, blank=True)
+  follower = models.ManyToManyField(settings.AUTH_USER_MODEL, blank=True)
+  pass
+
+class Tweet(models.Model):
+  tweet = models.TextField()
+  favourite = models.ManyToManyField(settings.AUTH_USER_MODEL, blank=True, related_name='user_favourite')
+
+  def __unicode__(self):
+    return self.tweet
+```
+What will the above model be able to do ?
+1) User will able to follow/unfollow other users.
+2) User will able to see tweets made by other users whom user is following.
+3) User is able to favorite/unfavorite tweets.
+
+## What is the difference between null=True and blank=True?
++ The default value of both null and blank is False. Both of these values work at field level i.e., whether we want to keep a field null or blank.
++ null=True will set the field’s value to NULL i.e., no data.
++ blank=True determines whether the field will be required in forms. This includes the admin and your own custom forms.
++ null=True blank=True This means that the field is optional in all circumstances
+
+## How to use a UUID instead of ID as primary key?
++ Whenever we create any new model, there is an ID field attached to it.
++ To make id field as UUID, there is a new field type UUIDField which was added in django version 1.8+.
+```
+import uuid
+from django.db import models
+
+class Event(models.Model):
+  id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+  details = models.TextField()
+  years_ago = models.PositiveIntegerField()
+```
+
+🎉 Let's celebrate.
+
+
+
+
+
+
+
+
 
 
 
